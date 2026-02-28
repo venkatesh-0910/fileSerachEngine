@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Smart PDF Search Engine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description"
+        content="Upload PDFs and search for keywords with OCR support. Fast, private, and runs locally.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        /* ===== CSS Custom Properties ===== */
+        :root {
+            --bg-primary: #0b1120;
+            --bg-secondary: #131b2e;
+            --bg-card: #1a2340;
+            --bg-card-hover: #1f2b4d;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #6366f1;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: rgba(148, 163, 184, 0.12);
+            --glass-bg: rgba(30, 41, 75, 0.7);
+            --glass-border: rgba(148, 163, 184, 0.15);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.4);
+            --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.15);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-xl: 24px;
+            --transition-fast: 0.2s ease;
+            --transition-normal: 0.3s ease;
+        }
+
+        /* ===== Light Theme ===== */
+        [data-theme='light'] {
+            --bg-primary: #f0f2f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f8f9fb;
+            --accent-primary: #2563eb;
+            --accent-secondary: #4f46e5;
+            --accent-success: #059669;
+            --accent-warning: #d97706;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border-color: rgba(0, 0, 0, 0.08);
+            --glass-bg: rgba(255, 255, 255, 0.8);
+            --glass-border: rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.08);
+            --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.08);
+        }
+
+        /* ===== Reset & Base ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ===== Header / Navbar ===== */
+        .navbar-custom {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0.75rem 0;
+        }
+
+        .navbar-custom.scrolled {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .navbar-brand-custom {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.25rem;
+            transition: var(--transition-fast);
+        }
+
+        .navbar-brand-custom:hover {
+            color: var(--accent-primary);
+        }
+
+        .brand-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            font-size: 1.2rem;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .nav-link-custom {
+            color: var(--text-secondary) !important;
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem !important;
+            border-radius: var(--radius-sm);
+            transition: var(--transition-fast);
+            position: relative;
+        }
+
+        .nav-link-custom:hover,
+        .nav-link-custom.active {
+            color: var(--accent-primary) !important;
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        .version-badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-primary);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== Main Content ===== */
+        main {
+            flex: 1;
+            padding-top: 2rem;
+        }
+
+        /* ===== Main Card ===== */
+        .main-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition-normal);
+        }
+
+        .main-card:hover {
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+        }
+
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.25rem;
+        }
+
+        .section-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* ===== Upload & Search Sections ===== */
+        .section-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-label i {
+            font-size: 1rem;
+            color: var(--accent-primary);
+        }
+
+        .form-control {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: var(--radius-md);
+            padding: 0.65rem 1rem;
+            font-size: 0.95rem;
+            transition: var(--transition-fast);
+        }
+
+        .form-control:focus {
+            background: var(--bg-secondary);
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-control::file-selector-button {
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--accent-primary);
+            border: none;
+            border-right: 1px solid var(--border-color);
+            padding: 0.65rem 1.25rem;
+            margin-right: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+
+        .form-control::file-selector-button:hover {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-upload {
+            background: linear-gradient(135deg, var(--accent-success), #059669);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            padding: 0.65rem 1.5rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            transition: var(--transition-fast);
+        }
+
+        .btn-upload:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-search {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            padding: 0.65rem 1.5rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            transition: var(--transition-fast);
+        }
+
+        .btn-search:hover {
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .divider {
+            border: 0;
+            height: 1px;
+            background: var(--border-color);
+            margin: 1.75rem 0;
+        }
+
+        /* ===== Results ===== */
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .results-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .result-count {
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .result-box {
+            max-height: 480px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .result-box::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .result-box::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+        }
+
+        .result-box::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 10px;
+        }
+
+        .result-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            transition: var(--transition-fast);
+        }
+
+        .result-card:hover {
+            background: var(--bg-card-hover);
+            border-left-color: var(--accent-secondary);
+            transform: translateX(4px);
+        }
+
+        .result-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0.75rem;
+        }
+
+        .badge-file {
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--accent-primary);
+            font-weight: 600;
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .badge-page {
+            background: rgba(148, 163, 184, 0.12);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .result-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+
+        mark {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(245, 158, 11, 0.2));
+            color: var(--accent-warning);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .alert-no-results {
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            color: var(--text-secondary);
+            border-radius: var(--radius-md);
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .alert-no-results strong {
+            color: var(--accent-primary);
+        }
+
+        /* ===== Flash Alerts ===== */
+        .alert {
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            border: none;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--accent-success);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.12);
+            color: var(--accent-warning);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+
+        .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+
+        [data-theme='light'] .btn-close {
+            filter: none;
+        }
+
+        /* ===== Theme Toggle ===== */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--accent-warning);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.2s ease;
+            margin-left: 8px;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-card-hover);
+            transform: scale(1.1);
+        }
+
+        .theme-toggle .icon-sun {
+            display: none;
+        }
+
+        .theme-toggle .icon-moon {
+            display: inline;
+        }
+
+        [data-theme='light'] .theme-toggle .icon-sun {
+            display: inline;
+        }
+
+        [data-theme='light'] .theme-toggle .icon-moon {
+            display: none;
+        }
+
+        /* ===== Documentation Section ===== */
+        .doc-section {
+            margin-top: 2rem;
+        }
+
+        .doc-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .doc-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.35rem;
+        }
+
+        .doc-subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .accordion-item {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md) !important;
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+        }
+
+        .accordion-button {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 1rem 1.25rem;
+            box-shadow: none !important;
+            border-radius: var(--radius-md) !important;
+        }
+
+        .accordion-button:not(.collapsed) {
+            background: rgba(59, 130, 246, 0.08);
+            color: var(--accent-primary);
+        }
+
+        .accordion-button::after {
+            filter: invert(1) brightness(200%);
+        }
+
+        [data-theme='light'] .accordion-button::after {
+            filter: none;
+        }
+
+        .navbar-toggler-icon {
+            filter: invert(1);
+        }
+
+        [data-theme='light'] .navbar-toggler-icon {
+            filter: none;
+        }
+
+        .accordion-body {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.8;
+            padding: 1.25rem;
+        }
+
+        .step-list {
+            list-style: none;
+            padding: 0;
+            counter-reset: steps;
+        }
+
+        .step-list li {
+            counter-increment: steps;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background: rgba(59, 130, 246, 0.04);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .step-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content strong {
+            color: var(--text-primary);
+        }
+
+        .tech-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 4px;
+        }
+
+        .tech-tag.flask {
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--accent-success);
+        }
+
+        .tech-tag.pymupdf {
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--accent-primary);
+        }
+
+        .tech-tag.tesseract {
+            background: rgba(99, 102, 241, 0.12);
+            color: var(--accent-secondary);
+        }
+
+        .tech-tag.bootstrap {
+            background: rgba(148, 163, 184, 0.12);
+            color: var(--text-secondary);
+        }
+
+        /* ===== Footer ===== */
+        .footer-custom {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 2.5rem 0 1.5rem;
+            margin-top: 3rem;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-brand .brand-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 0.95rem;
+        }
+
+        .footer-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            max-width: 300px;
+        }
+
+        .footer-heading {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links {
+            list-style: none;
+            padding: 0;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: var(--transition-fast);
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-primary);
+            padding-left: 4px;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-copyright {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .btn-back-to-top {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-primary);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            text-decoration: none;
+            transition: var(--transition-fast);
+        }
+
+        .btn-back-to-top:hover {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        /* ===== Loading Spinner ===== */
+        .spinner-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 17, 32, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner-overlay.active {
+            display: flex;
+        }
+
+        .spinner-content {
+            text-align: center;
+        }
+
+        .spinner-ring {
+            width: 56px;
+            height: 56px;
+            border: 4px solid rgba(218, 221, 229, 0.15);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner-text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        /* ===== OCR Progress Bar ===== */
+        .ocr-progress-section {
+            display: none;
+            margin-top: 1rem;
+            padding: 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .ocr-progress-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .progress-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-title .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
+        }
+
+        .progress-percent {
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 10px;
+            background: rgba(148, 163, 184, 0.12);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 10px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-primary));
+            background-size: 200% 100%;
+            animation: shimmer 2s linear infinite;
+            transition: width 0.4s ease;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .progress-details {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .progress-stat {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .progress-stat i {
+            color: var(--accent-primary);
+            font-size: 0.85rem;
+        }
+
+        .progress-done {
+            padding: 1rem;
+            text-align: center;
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: var(--radius-md);
+            margin-top: 1rem;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .progress-done.active {
+            display: block;
+        }
+
+        .progress-done i {
+            font-size: 1.5rem;
+            color: var(--accent-success);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-done strong {
+            color: var(--accent-success);
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+
+            .main-card,
+            .doc-card {
+                padding: 1.5rem;
+                border-radius: var(--radius-lg);
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        /* ===== Input Group Fix ===== */
+        .input-group .form-control {
+            border-radius: var(--radius-md) 0 0 var(--radius-md);
+        }
+    </style>
+</head>
+
+<body id="top">
+
+    <!-- ===== Loading Spinner Overlay ===== -->
+    <div class="spinner-overlay" id="loadingSpinner">
+        <div class="spinner-content">
+            <div class="spinner-ring"></div>
+            <p class="spinner-text">Searching your documents…<br>
+                <small class="text-muted">OCR processing may take a moment</small>
+            </p>
+        </div>
+    </div>
+
+    <!-- ===== Header / Navbar ===== -->
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top" id="mainNav">
+        <div class="container">
+            <a class="navbar-brand-custom" href="#top">
+                <span class="brand-icon"><i class="bi bi-file-earmark-pdf"></i></span>
+                Smart PDF Search
+                <span class="version-badge">v1.0</span>
+            </a>
+
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-custom active" href="#search-section">
+                            <i class="bi bi-search me-1"></i> Search
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-custom" href="#docs-section">
+                            <i class="bi bi-book me-1"></i> Documentation
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-custom" href="#footer-section">
+                            <i class="bi bi-info-circle me-1"></i> About
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <button class="theme-toggle" id="themeToggle" title="Toggle theme"
+                            aria-label="Toggle light/dark theme">
+                            <i class="bi bi-sun-fill icon-sun"></i>
+                            <i class="bi bi-moon-fill icon-moon"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== Main Content ===== -->
+    <main>
+        <div class="container py-4">
+            <div class="row justify-content-center">
+                <div class="col-xl-8 col-lg-10">
+
+                    <!-- ===== Search Card ===== -->
+                    <div class="main-card" id="search-section">
+
+                        <!-- Title -->
+                        <div class="text-center mb-4">
+                            <h1 class="section-title">
+                                <i class="bi bi-file-earmark-search"></i> Smart PDF Search Engine
+                            </h1>
+                            <p class="section-subtitle">
+                                Upload PDFs and search by keyword — powered by OCR for scanned documents
+                            </p>
+                        </div>
+
+                        <!-- Flash Messages -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                        {% endwith %}
+
+                        <!-- Upload Section -->
+                        <div class="section-label">
+                            <i class="bi bi-cloud-arrow-up"></i> Upload PDF
+                        </div>
+                        <form method="POST" action="/upload" enctype="multipart/form-data" class="mb-3" id="uploadForm">
+                            <div class="input-group">
+                                <input type="file" name="file" class="form-control" accept=".pdf" required
+                                    id="uploadInput">
+                                <button type="submit" class="btn btn-upload" id="uploadBtn">
+                                    <i class="bi bi-upload me-1"></i> Upload
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- OCR Progress Bar -->
+                        <div class="ocr-progress-section" id="ocrProgress">
+                            <div class="progress-header">
+                                <span class="progress-title">
+                                    <span class="pulse-dot"></span>
+                                    <span id="progressLabel">Processing scanned pages…</span>
+                                </span>
+                                <span class="progress-percent" id="progressPercent">0%</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <div class="progress-details">
+                                <span class="progress-stat">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                    <span id="progressPages">0 / 0 pages</span>
+                                </span>
+                                <span class="progress-stat">
+                                    <i class="bi bi-speedometer2"></i>
+                                    <span id="progressSpeed">Calculating…</span>
+                                </span>
+                                <span class="progress-stat">
+                                    <i class="bi bi-clock-history"></i>
+                                    <span id="progressEta">Estimating…</span>
+                                </span>
+                            </div>
+                            <div class="progress-done" id="progressDone">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <strong>OCR Complete!</strong><br>
+                                <small class="text-muted">All scanned pages have been processed. You can now
+                                    search.</small>
+                            </div>
+                        </div>
+
+                        <hr class="divider">
+
+                        <!-- Search Section -->
+                        <div class="section-label">
+                            <i class="bi bi-search"></i> Search Keyword
+                        </div>
+                        <form method="POST" action="/search" class="mb-3" id="searchForm">
+                            <div class="input-group">
+                                <input type="text" name="keyword" class="form-control"
+                                    placeholder="Enter keyword to search…" required id="searchInput">
+                                <button type="submit" class="btn btn-search">
+                                    <i class="bi bi-search me-1"></i> Search
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Results -->
+                        {% if results is defined and results is not none %}
+
+                        <hr class="divider">
+
+                        {% if results|length > 0 %}
+                        <div class="results-header">
+                            <span class="results-title">
+                                <i class="bi bi-list-check me-1"></i> Search Results
+                            </span>
+                            <span class="result-count">
+                                {{ results|length }} match{{ 'es' if results|length != 1 }}
+                            </span>
+                        </div>
+
+                        <div class="result-box">
+                            {% for result in results %}
+                            <div class="result-card">
+                                <div class="result-meta">
+                                    <span class="badge-file">
+                                        <i class="bi bi-file-pdf me-1"></i>{{ result.filename }}
+                                    </span>
+                                    <span class="badge-page">
+                                        <i class="bi bi-journal-text me-1"></i>Page {{ result.page }}
+                                    </span>
+                                </div>
+                                <div class="result-text">{{ result.text|safe }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        {% else %}
+                        <div class="alert-no-results">
+                            <i class="bi bi-search"
+                                style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;"></i>
+                            No results found for "<strong>{{ keyword }}</strong>".<br>
+                            <small>Try a different keyword or upload another document.</small>
+                        </div>
+                        {% endif %}
+
+                        {% endif %}
+
+                    </div>
+
+                    <!-- ===== Documentation Section ===== -->
+                    <div class="doc-section" id="docs-section">
+                        <div class="doc-card">
+                            <div class="text-center mb-1">
+                                <h2 class="doc-title">
+                                    <i class="bi bi-book"></i> Documentation
+                                </h2>
+                                <p class="doc-subtitle">Everything you need to know about using this application</p>
+                            </div>
+
+                            <div class="accordion" id="docsAccordion">
+
+                                <!-- Getting Started -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                            data-bs-target="#collapseStart" aria-expanded="true"
+                                            aria-controls="collapseStart">
+                                            <i class="bi bi-rocket-takeoff me-2"></i> Getting Started
+                                        </button>
+                                    </h2>
+                                    <div id="collapseStart" class="accordion-collapse collapse show"
+                                        data-bs-parent="#docsAccordion">
+                                        <div class="accordion-body">
+                                            <ol class="step-list">
+                                                <li>
+                                                    <span class="step-number">1</span>
+                                                    <div class="step-content">
+                                                        <strong>Upload a PDF</strong><br>
+                                                        Click <em>"Choose File"</em> and select any PDF document from
+                                                        your device, then press <em>"Upload"</em>.
+                                                    </div>
+                                                </li>
+                                                <li>
+                                                    <span class="step-number">2</span>
+                                                    <div class="step-content">
+                                                        <strong>Enter a keyword</strong><br>
+                                                        Type a word or phrase into the search bar and press
+                                                        <em>"Search"</em>.
+                                                    </div>
+                                                </li>
+                                                <li>
+                                                    <span class="step-number">3</span>
+                                                    <div class="step-content">
+                                                        <strong>Review results</strong><br>
+                                                        Matched text snippets appear below, highlighted and organized by
+                                                        page number.
+                                                    </div>
+                                                </li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- OCR Explained -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#collapseOCR"
+                                            aria-expanded="false" aria-controls="collapseOCR">
+                                            <i class="bi bi-eye me-2"></i> What is OCR?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseOCR" class="accordion-collapse collapse"
+                                        data-bs-parent="#docsAccordion">
+                                        <div class="accordion-body">
+                                            <strong>Optical Character Recognition (OCR)</strong> converts images of text
+                                            — such as scanned pages — into machine-readable text.
+                                            <br><br>
+                                            This app automatically detects pages that contain scanned images instead of
+                                            selectable text and applies OCR via <strong>Tesseract</strong> to extract
+                                            the content.
+                                            <br><br>
+                                            <em><i class="bi bi-lightbulb me-1"></i> Tip:</em> OCR works best on clean,
+                                            high-resolution scans. Handwritten or heavily stylized text may produce
+                                            lower accuracy.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Supported Formats -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#collapseFormats"
+                                            aria-expanded="false" aria-controls="collapseFormats">
+                                            <i class="bi bi-file-earmark-check me-2"></i> Supported Formats & Limits
+                                        </button>
+                                    </h2>
+                                    <div id="collapseFormats" class="accordion-collapse collapse"
+                                        data-bs-parent="#docsAccordion">
+                                        <div class="accordion-body">
+                                            <ul class="mb-0">
+                                                <li><strong>File type:</strong> PDF only (<code>.pdf</code>)</li>
+                                                <li><strong>Text PDFs:</strong> Searchable instantly using native text
+                                                    extraction</li>
+                                                <li><strong>Scanned PDFs:</strong> Automatically processed with OCR (may
+                                                    take longer)</li>
+                                                <li><strong>Storage:</strong> Only one PDF is kept at a time — uploading
+                                                    a new file replaces the previous one</li>
+                                                <li><strong>Privacy:</strong> All processing happens locally on your
+                                                    machine. No data is sent externally.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- FAQ -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#collapseFAQ"
+                                            aria-expanded="false" aria-controls="collapseFAQ">
+                                            <i class="bi bi-question-circle me-2"></i> Frequently Asked Questions
+                                        </button>
+                                    </h2>
+                                    <div id="collapseFAQ" class="accordion-collapse collapse"
+                                        data-bs-parent="#docsAccordion">
+                                        <div class="accordion-body">
+                                            <p><strong>Q: Why is the search slow?</strong><br>
+                                                A: Pages without selectable text are processed with OCR, which can take
+                                                several seconds per page. Native-text PDFs search almost instantly.</p>
+
+                                            <p><strong>Q: Can I upload multiple files?</strong><br>
+                                                A: Currently, only one PDF is stored at a time. Uploading a new file
+                                                automatically replaces the previous one.</p>
+
+                                            <p class="mb-0"><strong>Q: Is my data secure?</strong><br>
+                                                A: Yes — everything runs locally on your machine. No files or data are
+                                                uploaded to any external server.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tech Stack -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#collapseTech"
+                                            aria-expanded="false" aria-controls="collapseTech">
+                                            <i class="bi bi-cpu me-2"></i> Technology Stack
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTech" class="accordion-collapse collapse"
+                                        data-bs-parent="#docsAccordion">
+                                        <div class="accordion-body">
+                                            <div class="d-flex flex-wrap">
+                                                <span class="tech-tag flask"><i class="bi bi-braces"></i> Flask</span>
+                                                <span class="tech-tag pymupdf"><i class="bi bi-file-pdf"></i>
+                                                    PyMuPDF</span>
+                                                <span class="tech-tag tesseract"><i class="bi bi-eye"></i> Tesseract
+                                                    OCR</span>
+                                                <span class="tech-tag bootstrap"><i class="bi bi-bootstrap"></i>
+                                                    Bootstrap 5</span>
+                                            </div>
+                                            <p class="mt-3 mb-0" style="font-size: 0.85rem;">
+                                                Built with <strong>Python + Flask</strong> on the backend. PDFs are
+                                                parsed using <strong>PyMuPDF (fitz)</strong>. Scanned pages are handled
+                                                via <strong>Tesseract OCR</strong>. The frontend uses <strong>Bootstrap
+                                                    5</strong> with custom styling.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer-custom" id="footer-section">
+        <div class="container">
+            <div class="row g-4">
+
+                <!-- Brand Column -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="footer-brand">
+                        <span class="brand-icon"><i class="bi bi-file-earmark-pdf"></i></span>
+                        Smart PDF Search
+                    </div>
+                    <p class="footer-desc">
+                        A fast, private, and intelligent PDF search engine. Upload documents and find what you need
+                        instantly — powered by OCR for scanned files.
+                    </p>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="col-lg-2 col-md-6">
+                    <div class="footer-heading">Quick Links</div>
+                    <ul class="footer-links">
+                        <li><a href="#top"><i class="bi bi-house me-1"></i> Home</a></li>
+                        <li><a href="#search-section"><i class="bi bi-search me-1"></i> Search</a></li>
+                        <li><a href="#docs-section"><i class="bi bi-book me-1"></i> Docs</a></li>
+                    </ul>
+                </div>
+
+                <!-- Resources -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="footer-heading">Resources</div>
+                    <ul class="footer-links">
+                        <li><a href="https://flask.palletsprojects.com/" target="_blank" rel="noopener noreferrer">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> Flask Docs</a></li>
+                        <li><a href="https://pymupdf.readthedocs.io/" target="_blank" rel="noopener noreferrer">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> PyMuPDF Docs</a></li>
+                        <li><a href="https://github.com/tesseract-ocr/tesseract" target="_blank"
+                                rel="noopener noreferrer">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> Tesseract OCR</a></li>
+                    </ul>
+                </div>
+
+                <!-- Built With -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="footer-heading">Built With</div>
+                    <div class="d-flex flex-wrap">
+                        <span class="tech-tag flask"><i class="bi bi-braces"></i> Flask</span>
+                        <span class="tech-tag pymupdf"><i class="bi bi-file-pdf"></i> PyMuPDF</span>
+                        <span class="tech-tag tesseract"><i class="bi bi-eye"></i> Tesseract</span>
+                        <span class="tech-tag bootstrap"><i class="bi bi-bootstrap"></i> Bootstrap</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Bottom -->
+            <div class="footer-bottom">
+                <span class="footer-copyright">
+                    &copy; 2026 Smart PDF Search Engine. All rights reserved (because that's what websites say)....
+                </span>
+                <a href="#top" class="btn-back-to-top">
+                    <i class="bi bi-arrow-up-circle"></i> Back to Top
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Theme toggle with localStorage persistence
+        (function () {
+            const html = document.documentElement;
+            const saved = localStorage.getItem('theme');
+            if (saved) html.setAttribute('data-theme', saved);
+
+            document.getElementById('themeToggle').addEventListener('click', function () {
+                const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+                html.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+            });
+        })();
+
+        // Show loading spinner when search form is submitted
+        document.getElementById("searchForm").addEventListener("submit", function () {
+            document.getElementById("loadingSpinner").classList.add("active");
+        });
+
+        // ===== OCR Progress Polling =====
+        (function () {
+            // Check if there's an active task from the server
+            const activeTaskId = "{{ active_task_id or '' }}";
+            if (activeTaskId) {
+                startProgressPolling(activeTaskId);
+            }
+        })();
+
+        let pollInterval = null;
+        let pollStartTime = null;
+
+        function startProgressPolling(taskId) {
+            const section = document.getElementById('ocrProgress');
+            const fill = document.getElementById('progressFill');
+            const percent = document.getElementById('progressPercent');
+            const pages = document.getElementById('progressPages');
+            const speed = document.getElementById('progressSpeed');
+            const eta = document.getElementById('progressEta');
+            const label = document.getElementById('progressLabel');
+            const doneBox = document.getElementById('progressDone');
+            const searchBtn = document.querySelector('.btn-search');
+
+            section.classList.add('active');
+            pollStartTime = Date.now();
+
+            pollInterval = setInterval(function () {
+                fetch('/progress/' + taskId)
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.status === 'not_found') {
+                            clearInterval(pollInterval);
+                            section.classList.remove('active');
+                            return;
+                        }
+
+                        const pct = data.total > 0
+                            ? Math.round((data.done / data.total) * 100)
+                            : 0;
+
+                        fill.style.width = pct + '%';
+                        percent.textContent = pct + '%';
+                        pages.textContent = data.done + ' / ' + data.total + ' pages';
+
+                        // Speed calculation
+                        const elapsed = (Date.now() - pollStartTime) / 1000;
+                        if (elapsed > 2 && data.done > 0) {
+                            const pps = (data.done / elapsed).toFixed(1);
+                            speed.textContent = pps + ' pages/sec';
+
+                            const remaining = data.total - data.done;
+                            const etaSec = Math.round(remaining / (data.done / elapsed));
+                            if (etaSec > 60) {
+                                eta.textContent = '~' + Math.round(etaSec / 60) + ' min left';
+                            } else {
+                                eta.textContent = '~' + etaSec + 's left';
+                            }
+                        }
+
+                        if (data.status === 'done') {
+                            clearInterval(pollInterval);
+                            fill.style.width = '100%';
+                            percent.textContent = '100%';
+                            label.textContent = 'Processing complete!';
+                            pages.textContent = data.total + ' / ' + data.total + ' pages';
+                            speed.textContent = 'Done';
+                            eta.textContent = 'Complete';
+                            doneBox.classList.add('active');
+
+                            // Stop shimmer animation
+                            fill.style.animation = 'none';
+                            fill.style.background = 'linear-gradient(135deg, var(--accent-success), #059669)';
+                        }
+
+                        if (data.status === 'error') {
+                            clearInterval(pollInterval);
+                            label.textContent = 'OCR Error: ' + (data.error || 'Unknown error');
+                            fill.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+                            fill.style.animation = 'none';
+                        }
+                    })
+                    .catch(function () {
+                        // Network error — keep trying
+                    });
+            }, 1000);
+        }
+
+        // ===== Upload form — show spinner during upload =====
+        document.getElementById('uploadForm').addEventListener('submit', function () {
+            document.getElementById('loadingSpinner').classList.add('active');
+            document.querySelector('.spinner-text').innerHTML =
+                'Uploading and analyzing PDF…<br><small class="text-muted">Detecting text vs scanned pages</small>';
+        });
+
+        // Throttled scroll handler using requestAnimationFrame (prevents jank)
+        const navbar = document.getElementById("mainNav");
+        const sections = document.querySelectorAll("[id$='-section']");
+        const navLinks = document.querySelectorAll(".nav-link-custom");
+        let ticking = false;
+
+        window.addEventListener("scroll", function () {
+            if (!ticking) {
+                window.requestAnimationFrame(function () {
+                    const scrollY = window.scrollY;
+
+                    // Navbar shadow on scroll
+                    if (scrollY > 50) {
+                        navbar.classList.add("scrolled");
+                    } else {
+                        navbar.classList.remove("scrolled");
+                    }
+
+                    // Active nav link highlight
+                    let current = "";
+                    sections.forEach(function (section) {
+                        if (scrollY >= section.offsetTop - 120) {
+                            current = "#" + section.id;
+                        }
+                    });
+                    navLinks.forEach(function (link) {
+                        link.classList.remove("active");
+                        if (link.getAttribute("href") === current) {
+                            link.classList.add("active");
+                        }
+                    });
+
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        }, { passive: true });
+    </script>
+
+</body>
+
+</html>
