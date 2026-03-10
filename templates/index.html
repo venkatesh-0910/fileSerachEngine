@@ -30,6 +30,7 @@
             --accent-secondary: #6366f1;
             --accent-success: #10b981;
             --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
             --text-primary: #f1f5f9;
             --text-secondary: #94a3b8;
             --text-muted: #64748b;
@@ -56,6 +57,7 @@
             --accent-secondary: #4f46e5;
             --accent-success: #059669;
             --accent-warning: #d97706;
+            --accent-danger: #dc2626;
             --text-primary: #1e293b;
             --text-secondary: #475569;
             --text-muted: #94a3b8;
@@ -284,6 +286,50 @@
             margin: 1.75rem 0;
         }
 
+        /* ===== File Info Bar & Clear Button ===== */
+        .file-info-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 1rem;
+            background: rgba(59, 130, 246, 0.06);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            border-radius: var(--radius-sm);
+            margin-top: 0.75rem;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .file-info i {
+            color: var(--accent-primary);
+            font-size: 1.1rem;
+        }
+
+        .btn-clear {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            font-weight: 600;
+            font-size: 0.8rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: var(--radius-sm);
+            transition: var(--transition-fast);
+            cursor: pointer;
+        }
+
+        .btn-clear:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            transform: translateY(-1px);
+        }
+
         /* ===== Results ===== */
         .results-header {
             display: flex;
@@ -420,6 +466,13 @@
             background: rgba(245, 158, 11, 0.12);
             color: var(--accent-warning);
             border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+
+        /* FIX #4: Added alert-info styling for dark/light themes */
+        .alert-info {
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--accent-primary);
+            border: 1px solid rgba(59, 130, 246, 0.25);
         }
 
         .btn-close {
@@ -922,6 +975,12 @@
                 flex-direction: column;
                 text-align: center;
             }
+
+            .file-info-bar {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
         }
 
         /* ===== Input Group Fix ===== */
@@ -949,7 +1008,7 @@
             <a class="navbar-brand-custom" href="#top">
                 <span class="brand-icon"><i class="bi bi-file-earmark-pdf"></i></span>
                 Smart PDF Search
-                <span class="version-badge">v1.0</span>
+                <span class="version-badge">v1.1</span>
             </a>
 
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse"
@@ -1012,7 +1071,8 @@
                         {% for category, message in messages %}
                         <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                             {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
                         </div>
                         {% endfor %}
                         {% endif %}
@@ -1022,7 +1082,8 @@
                         <div class="section-label">
                             <i class="bi bi-cloud-arrow-up"></i> Upload PDF
                         </div>
-                        <form method="POST" action="/upload" enctype="multipart/form-data" class="mb-3" id="uploadForm">
+                        <form method="POST" action="/upload" enctype="multipart/form-data" class="mb-0"
+                            id="uploadForm">
                             <div class="input-group">
                                 <input type="file" name="file" class="form-control" accept=".pdf" required
                                     id="uploadInput">
@@ -1031,6 +1092,21 @@
                                 </button>
                             </div>
                         </form>
+
+                        <!-- File Info Bar with Clear Button -->
+                        {% if uploaded_files %}
+                        <div class="file-info-bar">
+                            <div class="file-info">
+                                <i class="bi bi-file-earmark-pdf-fill"></i>
+                                <span>{{ uploaded_files[0] }}</span>
+                            </div>
+                            <form method="POST" action="/clear" class="d-inline">
+                                <button type="submit" class="btn-clear">
+                                    <i class="bi bi-trash3 me-1"></i> Clear All
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
 
                         <!-- OCR Progress Bar -->
                         <div class="ocr-progress-section" id="ocrProgress">
@@ -1220,6 +1296,7 @@
                                         <div class="accordion-body">
                                             <ul class="mb-0">
                                                 <li><strong>File type:</strong> PDF only (<code>.pdf</code>)</li>
+                                                <li><strong>Max file size:</strong> 50 MB</li>
                                                 <li><strong>Text PDFs:</strong> Searchable instantly using native text
                                                     extraction</li>
                                                 <li><strong>Scanned PDFs:</strong> Automatically processed with OCR (may
@@ -1370,46 +1447,52 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Theme toggle with localStorage persistence
+        // ===== Theme toggle with localStorage persistence =====
         (function () {
-            const html = document.documentElement;
-            const saved = localStorage.getItem('theme');
+            var html = document.documentElement;
+            var saved = localStorage.getItem('theme');
             if (saved) html.setAttribute('data-theme', saved);
 
             document.getElementById('themeToggle').addEventListener('click', function () {
-                const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+                var next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
                 html.setAttribute('data-theme', next);
                 localStorage.setItem('theme', next);
             });
         })();
 
-        // Show loading spinner when search form is submitted
+        // ===== Show loading spinner when search form is submitted =====
         document.getElementById("searchForm").addEventListener("submit", function () {
             document.getElementById("loadingSpinner").classList.add("active");
         });
 
+        // ===== Upload form — show spinner during upload =====
+        document.getElementById('uploadForm').addEventListener('submit', function () {
+            document.getElementById('loadingSpinner').classList.add('active');
+            document.querySelector('.spinner-text').innerHTML =
+                'Uploading and analyzing PDF…<br><small class="text-muted">Detecting text vs scanned pages</small>';
+        });
+
         // ===== OCR Progress Polling =====
         (function () {
-            // Check if there's an active task from the server
-            const activeTaskId = "{{ active_task_id or '' }}";
+            // FIX #9: Use tojson filter to safely inject value into JavaScript
+            var activeTaskId = {{ (active_task_id or '')|tojson }};
             if (activeTaskId) {
                 startProgressPolling(activeTaskId);
             }
         })();
 
-        let pollInterval = null;
-        let pollStartTime = null;
+        var pollInterval = null;
+        var pollStartTime = null;
 
         function startProgressPolling(taskId) {
-            const section = document.getElementById('ocrProgress');
-            const fill = document.getElementById('progressFill');
-            const percent = document.getElementById('progressPercent');
-            const pages = document.getElementById('progressPages');
-            const speed = document.getElementById('progressSpeed');
-            const eta = document.getElementById('progressEta');
-            const label = document.getElementById('progressLabel');
-            const doneBox = document.getElementById('progressDone');
-            const searchBtn = document.querySelector('.btn-search');
+            var section = document.getElementById('ocrProgress');
+            var fill = document.getElementById('progressFill');
+            var percent = document.getElementById('progressPercent');
+            var pages = document.getElementById('progressPages');
+            var speed = document.getElementById('progressSpeed');
+            var eta = document.getElementById('progressEta');
+            var label = document.getElementById('progressLabel');
+            var doneBox = document.getElementById('progressDone');
 
             section.classList.add('active');
             pollStartTime = Date.now();
@@ -1424,7 +1507,18 @@
                             return;
                         }
 
-                        const pct = data.total > 0
+                        // Handle cancelled status
+                        if (data.status === 'cancelled') {
+                            clearInterval(pollInterval);
+                            label.textContent = 'Processing cancelled.';
+                            fill.style.animation = 'none';
+                            fill.style.background = 'var(--text-muted)';
+                            speed.textContent = '—';
+                            eta.textContent = '—';
+                            return;
+                        }
+
+                        var pct = data.total > 0
                             ? Math.round((data.done / data.total) * 100)
                             : 0;
 
@@ -1432,14 +1526,14 @@
                         percent.textContent = pct + '%';
                         pages.textContent = data.done + ' / ' + data.total + ' pages';
 
-                        // Speed calculation
-                        const elapsed = (Date.now() - pollStartTime) / 1000;
+                        // Speed & ETA calculation
+                        var elapsed = (Date.now() - pollStartTime) / 1000;
                         if (elapsed > 2 && data.done > 0) {
-                            const pps = (data.done / elapsed).toFixed(1);
+                            var pps = (data.done / elapsed).toFixed(1);
                             speed.textContent = pps + ' pages/sec';
 
-                            const remaining = data.total - data.done;
-                            const etaSec = Math.round(remaining / (data.done / elapsed));
+                            var remaining = data.total - data.done;
+                            var etaSec = Math.round(remaining / (data.done / elapsed));
                             if (etaSec > 60) {
                                 eta.textContent = '~' + Math.round(etaSec / 60) + ' min left';
                             } else {
@@ -1475,23 +1569,16 @@
             }, 1000);
         }
 
-        // ===== Upload form — show spinner during upload =====
-        document.getElementById('uploadForm').addEventListener('submit', function () {
-            document.getElementById('loadingSpinner').classList.add('active');
-            document.querySelector('.spinner-text').innerHTML =
-                'Uploading and analyzing PDF…<br><small class="text-muted">Detecting text vs scanned pages</small>';
-        });
-
-        // Throttled scroll handler using requestAnimationFrame (prevents jank)
-        const navbar = document.getElementById("mainNav");
-        const sections = document.querySelectorAll("[id$='-section']");
-        const navLinks = document.querySelectorAll(".nav-link-custom");
-        let ticking = false;
+        // ===== Throttled scroll handler using requestAnimationFrame =====
+        var navbar = document.getElementById("mainNav");
+        var sections = document.querySelectorAll("[id$='-section']");
+        var navLinks = document.querySelectorAll(".nav-link-custom");
+        var ticking = false;
 
         window.addEventListener("scroll", function () {
             if (!ticking) {
                 window.requestAnimationFrame(function () {
-                    const scrollY = window.scrollY;
+                    var scrollY = window.scrollY;
 
                     // Navbar shadow on scroll
                     if (scrollY > 50) {
@@ -1501,7 +1588,7 @@
                     }
 
                     // Active nav link highlight
-                    let current = "";
+                    var current = "";
                     sections.forEach(function (section) {
                         if (scrollY >= section.offsetTop - 120) {
                             current = "#" + section.id;
