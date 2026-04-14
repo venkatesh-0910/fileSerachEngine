@@ -1,3 +1,44 @@
+<!--
+  index.html - Smart PDF Search Engine (frontend)
+
+  Quick guide to find stuff (Ctrl+F these):
+
+  CSS STYLES:
+    "CSS 1"  -> color variables (dark theme)
+    "CSS 2"  -> light theme colors
+    "CSS 3"  -> basic reset and body styles
+    "CSS 4"  -> navbar / header
+    "CSS 5"  -> main card
+    "CSS 6"  -> upload & search form styling
+    "CSS 7"  -> file info bar & clear button
+    "CSS 8"  -> search results cards
+    "CSS 9"  -> alert / flash messages
+    "CSS 10" -> dark/light toggle button
+    "CSS 11" -> documentation accordion
+    "CSS 12" -> footer
+    "CSS 13" -> loading spinner overlay
+    "CSS 14" -> OCR progress bar
+    "CSS 15" -> responsive (mobile)
+    "CSS 16" -> AI analysis progress indicator
+    "CSS 17" -> topics panel
+    "CSS 18" -> semantic search results
+
+  HTML BODY:
+    "HTML 1" -> loading spinner
+    "HTML 2" -> navbar
+    "HTML 3" -> main content (upload, search, results)
+    "HTML 4" -> documentation section
+    "HTML 5" -> footer
+
+  JAVASCRIPT:
+    "JS 1" -> dark/light theme toggle
+    "JS 2" -> search spinner
+    "JS 3" -> upload spinner
+    "JS 4" -> OCR progress polling
+    "JS 5" -> AI analysis polling
+    "JS 6" -> topics loading & rendering
+    "JS 7" -> scroll effects (navbar shadow, active link)
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -20,7 +61,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
     <style>
-        /* ===== CSS Custom Properties ===== */
+        /* ===== CSS 1: Color Variables (dark theme is the default) ===== */
         :root {
             --bg-primary: #0b1120;
             --bg-secondary: #131b2e;
@@ -47,7 +88,7 @@
             --transition-normal: 0.3s ease;
         }
 
-        /* ===== Light Theme ===== */
+        /* ===== CSS 2: Light Theme Colors (overrides the dark ones) ===== */
         [data-theme='light'] {
             --bg-primary: #f0f2f5;
             --bg-secondary: #ffffff;
@@ -68,7 +109,7 @@
             --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.08);
         }
 
-        /* ===== Reset & Base ===== */
+        /* ===== CSS 3: Reset & Base (removing default margins etc.) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -89,7 +130,7 @@
             overflow-x: hidden;
         }
 
-        /* ===== Header / Navbar ===== */
+        /* ===== CSS 4: Navbar / Header at the top ===== */
         .navbar-custom {
             background: var(--bg-secondary);
             border-bottom: 1px solid var(--glass-border);
@@ -154,7 +195,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* ===== Main Content ===== */
+        /* ===== CSS 5: Main Card (the big white/dark card in the center) ===== */
         main {
             flex: 1;
             padding-top: 2rem;
@@ -190,7 +231,7 @@
             margin-bottom: 1.5rem;
         }
 
-        /* ===== Upload & Search Sections ===== */
+        /* ===== CSS 6: Upload & Search Form Inputs ===== */
         .section-label {
             font-size: 0.85rem;
             font-weight: 600;
@@ -286,7 +327,7 @@
             margin: 1.75rem 0;
         }
 
-        /* ===== File Info Bar & Clear Button ===== */
+        /* ===== CSS 7: File Info Bar & Clear Button ===== */
         .file-info-bar {
             display: flex;
             align-items: center;
@@ -330,7 +371,7 @@
             transform: translateY(-1px);
         }
 
-        /* ===== Results ===== */
+        /* ===== CSS 8: Search Results Cards ===== */
         .results-header {
             display: flex;
             align-items: center;
@@ -443,7 +484,7 @@
             color: var(--accent-primary);
         }
 
-        /* ===== Flash Alerts ===== */
+        /* ===== CSS 9: Flash Messages (success, error, warning alerts) ===== */
         .alert {
             border-radius: var(--radius-md);
             font-size: 0.9rem;
@@ -483,7 +524,7 @@
             filter: none;
         }
 
-        /* ===== Theme Toggle ===== */
+        /* ===== CSS 10: Dark/Light Mode Toggle Button ===== */
         .theme-toggle {
             display: flex;
             align-items: center;
@@ -521,7 +562,7 @@
             display: none;
         }
 
-        /* ===== Documentation Section ===== */
+        /* ===== CSS 11: Documentation Accordion Section ===== */
         .doc-section {
             margin-top: 2rem;
         }
@@ -665,7 +706,7 @@
             color: var(--text-secondary);
         }
 
-        /* ===== Footer ===== */
+        /* ===== CSS 12: Footer ===== */
         .footer-custom {
             background: var(--bg-secondary);
             border-top: 1px solid var(--border-color);
@@ -763,7 +804,7 @@
             transform: translateY(-2px);
         }
 
-        /* ===== Loading Spinner ===== */
+        /* ===== CSS 13: Loading Spinner (shows while searching/uploading) ===== */
         .spinner-overlay {
             display: none;
             position: fixed;
@@ -808,7 +849,7 @@
             font-weight: 500;
         }
 
-        /* ===== OCR Progress Bar ===== */
+        /* ===== CSS 14: OCR Progress Bar (shows during scanned page processing) ===== */
         .ocr-progress-section {
             display: none;
             margin-top: 1rem;
@@ -958,7 +999,7 @@
             color: var(--accent-success);
         }
 
-        /* ===== Responsive ===== */
+        /* ===== CSS 15: Responsive / Mobile Styles ===== */
         @media (max-width: 768px) {
 
             .main-card,
@@ -988,7 +1029,7 @@
             border-radius: var(--radius-md) 0 0 var(--radius-md);
         }
 
-        /* ===== AI Analysis Progress ===== */
+        /* ===== CSS 16: AI Analysis Progress Indicator ===== */
         .analysis-progress-section {
             display: none;
             margin-top: 1rem;
@@ -1038,7 +1079,7 @@
             font-weight: 600;
         }
 
-        /* ===== Topics Panel ===== */
+        /* ===== CSS 17: Topics Panel (shows detected chapters/topics) ===== */
         .topics-panel {
             display: none;
             margin-top: 1.5rem;
@@ -1167,7 +1208,7 @@
             background: rgba(99, 102, 241, 0.2);
         }
 
-        /* ===== Semantic Results ===== */
+        /* ===== CSS 18: Semantic / AI Search Results ===== */
         .semantic-section {
             margin-top: 1.5rem;
             animation: fadeIn 0.3s ease;
@@ -1258,7 +1299,7 @@
 
 <body id="top">
 
-    <!-- ===== Loading Spinner Overlay ===== -->
+    <!-- HTML 1: Loading Spinner (shows a spinning circle while processing) -->
     <div class="spinner-overlay" id="loadingSpinner">
         <div class="spinner-content">
             <div class="spinner-ring"></div>
@@ -1268,7 +1309,7 @@
         </div>
     </div>
 
-    <!-- ===== Header / Navbar ===== -->
+    <!-- HTML 2: Navbar / Header (brand name, nav links, theme toggle) -->
     <nav class="navbar navbar-expand-lg navbar-custom sticky-top" id="mainNav">
         <div class="container">
             <a class="navbar-brand-custom" href="#top">
@@ -1312,16 +1353,16 @@
         </div>
     </nav>
 
-    <!-- ===== Main Content ===== -->
+    <!-- HTML 3: Main Content Area (this is where everything important is) -->
     <main>
         <div class="container py-4">
             <div class="row justify-content-center">
                 <div class="col-xl-8 col-lg-10">
 
-                    <!-- ===== Search Card ===== -->
+                    <!-- the main card that holds upload + search + results -->
                     <div class="main-card" id="search-section">
 
-                        <!-- Title -->
+                        <!-- page title and subtitle -->
                         <div class="text-center mb-4">
                             <h1 class="section-title">
                                 <i class="bi bi-file-earmark-search"></i> Smart PDF Search Engine
@@ -1331,7 +1372,7 @@
                             </p>
                         </div>
 
-                        <!-- Flash Messages -->
+                        <!-- flash messages (success, error, warnings) -->
                         {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                         {% for category, message in messages %}
@@ -1344,7 +1385,7 @@
                         {% endif %}
                         {% endwith %}
 
-                        <!-- Upload Section -->
+                        <!-- file upload form -->
                         <div class="section-label">
                             <i class="bi bi-cloud-arrow-up"></i> Upload PDF
                         </div>
@@ -1359,7 +1400,7 @@
                             </div>
                         </form>
 
-                        <!-- File Info Bar with Clear Button -->
+                        <!-- shows which file is uploaded + clear button -->
                         {% if uploaded_files %}
                         <div class="file-info-bar">
                             <div class="file-info">
@@ -1374,7 +1415,7 @@
                         </div>
                         {% endif %}
 
-                        <!-- OCR Progress Bar -->
+                        <!-- OCR progress bar (only shows if scanned pages are being processed) -->
                         <div class="ocr-progress-section" id="ocrProgress">
                             <div class="progress-header">
                                 <span class="progress-title">
@@ -1408,7 +1449,7 @@
                             </div>
                         </div>
 
-                        <!-- AI Analysis Progress -->
+                        <!-- AI analysis status (shows while detecting topics) -->
                         <div class="analysis-progress-section" id="analysisProgress">
                             <div class="analysis-spinner"></div>
                             <span class="analysis-text">
@@ -1417,7 +1458,7 @@
                             </span>
                         </div>
 
-                        <!-- Document Topics Panel -->
+                        <!-- topics panel (shows the detected topics/chapters) -->
                         <div class="topics-panel" id="topicsPanel">
                             <div class="topics-header">
                                 <span class="topics-title">
@@ -1437,7 +1478,7 @@
 
                         <hr class="divider">
 
-                        <!-- Search Section -->
+                        <!-- search bar -->
                         <div class="section-label">
                             <i class="bi bi-search"></i> Search Keyword
                         </div>
@@ -1451,7 +1492,7 @@
                             </div>
                         </form>
 
-                        <!-- Results -->
+                        <!-- search results (exact keyword matches) -->
                         {% if results is defined and results is not none %}
 
                         <hr class="divider">
@@ -1483,7 +1524,7 @@
                         </div>
 
                         {% elif semantic_results is defined and semantic_results and semantic_results|length > 0 %}
-                        <!-- Semantic / AI-Related Results -->
+                        <!-- AI / semantic results (shows when no exact match found) -->
                         <div class="semantic-section">
                             <div class="semantic-header">
                                 <span class="semantic-title">
@@ -1518,6 +1559,7 @@
                         </div>
 
                         {% else %}
+                        <!-- no results message -->
                         <div class="alert-no-results">
                             <i class="bi bi-search"
                                 style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;"></i>
@@ -1530,7 +1572,7 @@
 
                     </div>
 
-                    <!-- ===== Documentation Section ===== -->
+                    <!-- HTML 4: Documentation Section (accordion with help/info) -->
                     <div class="doc-section" id="docs-section">
                         <div class="doc-card">
                             <div class="text-center mb-1">
@@ -1705,7 +1747,7 @@
         </div>
     </main>
 
-    <!-- ===== Footer ===== -->
+    <!-- HTML 5: Footer -->
     <footer class="footer-custom" id="footer-section">
         <div class="container">
             <div class="row g-4">
@@ -1775,7 +1817,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // ===== Theme toggle with localStorage persistence =====
+        // === JS 1: Theme Toggle ===
+        // saves user preference (dark/light) in localStorage so it remembers
         (function () {
             var html = document.documentElement;
             var saved = localStorage.getItem('theme');
@@ -1788,19 +1831,20 @@
             });
         })();
 
-        // ===== Show loading spinner when search form is submitted =====
+        // === JS 2: Show spinner when user searches ===
         document.getElementById("searchForm").addEventListener("submit", function () {
             document.getElementById("loadingSpinner").classList.add("active");
         });
 
-        // ===== Upload form — show spinner during upload =====
+        // === JS 3: Show spinner when user uploads a file ===
         document.getElementById('uploadForm').addEventListener('submit', function () {
             document.getElementById('loadingSpinner').classList.add('active');
             document.querySelector('.spinner-text').innerHTML =
                 'Uploading and analyzing PDF…<br><small class="text-muted">Detecting text vs scanned pages</small>';
         });
 
-        // ===== OCR Progress Polling =====
+        // === JS 4: OCR Progress Polling ===
+        // polls the server every second to check how many scanned pages are done
         (function () {
             // FIX #9: Use tojson filter to safely inject value into JavaScript
             var activeTaskId = {{ (active_task_id or '')|tojson }};
@@ -1905,7 +1949,8 @@
             }, 1000);
         }
 
-        // ===== AI Analysis Progress Polling =====
+        // === JS 5: AI Analysis Progress Polling ===
+        // checks if topic detection + embeddings are done
         (function () {
             var analysisTaskId = {{ (analysis_task_id or '')|tojson }};
             if (analysisTaskId) {
@@ -1968,7 +2013,8 @@
             }, 2000);
         }
 
-        // ===== Topics Loading & Rendering =====
+        // === JS 6: Topics Loading & Rendering ===
+        // fetches the detected topics from server and shows them in the panel
         function loadTopics(filename) {
             fetch('/topics/' + encodeURIComponent(filename))
                 .then(function (r) { return r.json(); })
@@ -2024,7 +2070,8 @@
             }
         }
 
-        // ===== Throttled scroll handler using requestAnimationFrame =====
+        // === JS 7: Scroll Effects ===
+        // adds shadow to navbar when scrolled + highlights the active nav link
         var navbar = document.getElementById("mainNav");
         var sections = document.querySelectorAll("[id$='-section']");
         var navLinks = document.querySelectorAll(".nav-link-custom");

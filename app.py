@@ -1,3 +1,25 @@
+# ─────────────────────────────────────────────────────
+# app.py  –  Smart PDF Search Engine (backend)
+#
+# Quick guide to find stuff (Ctrl+F these):
+#   "PART 1"  → imports
+#   "PART 2"  → AI model loader
+#   "PART 3"  → flask app setup
+#   "PART 4"  → folders & constants
+#   "PART 5"  → tesseract config
+#   "PART 6"  → global storage dicts
+#   "PART 7"  → helper / utility functions
+#   "PART 8"  → topic detection logic
+#   "PART 9"  → embedding generation
+#   "PART 10" → background analysis worker
+#   "PART 11" → semantic search
+#   "PART 12" → text extraction (PyMuPDF)
+#   "PART 13" → OCR processing (Tesseract)
+#   "PART 14" → snippet builder
+#   "PART 15" → all Flask routes
+#   "PART 16" → main entry point
+# ─────────────────────────────────────────────────────
+
 """
 Smart PDF Search Engine
 ========================
@@ -13,6 +35,8 @@ Topic Analysis & Semantic Search (v2):
 - When exact keyword search fails, returns related topics via cosine similarity
 """
 
+# ── PART 1: Imports ──────────────────────────────────
+# all the libraries we need for the project
 from flask import (
     Flask, render_template, request, redirect,
     url_for, flash, session, make_response, jsonify,
@@ -35,7 +59,9 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity as sklearn_cosine
 
-# Lazy-load the sentence-transformer model (downloads ~90MB on first run)
+# ── PART 2: AI Model Loader ──────────────────────────
+# loads the sentence-transformer model (downloads ~90MB first time)
+# using lazy loading so it only loads when we actually need it
 _st_model = None
 _st_lock = threading.Lock()
 
@@ -49,10 +75,15 @@ def get_st_model():
                 _st_model = SentenceTransformer("all-MiniLM-L6-v2")
     return _st_model
 
+# ── PART 3: Flask App Setup ──────────────────────────
+# creating the flask app and setting the secret key + max upload size
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB upload limit
 
+# ── PART 4: Folders & Constants ──────────────────────
+# setting up directories and some config values
+# like what file types are allowed, OCR resolution, etc.
 UPLOAD_FOLDER = "uploads"
 CACHE_FOLDER = "cache"
 EMBEDDINGS_FOLDER = "embeddings"
@@ -66,15 +97,17 @@ MAX_SEMANTIC_RESULTS = 8  # Max semantic matches to return
 for folder in (UPLOAD_FOLDER, CACHE_FOLDER, EMBEDDINGS_FOLDER):
     os.makedirs(folder, exist_ok=True)
 
-# ── Tesseract Configuration ──────────────────────────────────
+# ── PART 5: Tesseract OCR Config ─────────────────────
+# telling python where tesseract is installed (windows path)
 if os.name == "nt":
     tesseract_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
     if os.path.exists(tesseract_path):
         pytesseract.pytesseract.tesseract_cmd = tesseract_path
 
-# ── Server-side Storage ──────────────────────────────────────
-# FIX #1: Store results server-side instead of in session cookie
-# FIX #2: Track cancel flags for safe OCR interruption
+# ── PART 6: Global Storage (dictionaries) ────────────
+# these dicts keep track of running tasks, results, etc.
+# we store results here instead of in cookies because
+# cookies have a ~4KB size limit and our results can be bigger
 ocr_tasks = {}          # task_id → {status, done, total, ...}
 ocr_cancel_flags = {}   # task_id → bool
 result_store = {}       # result_id → {results, keyword}
@@ -82,9 +115,13 @@ analysis_tasks = {}     # task_id → {status, filename, topics, ...}
 analysis_cancel_flags = {} # task_id → bool
 
 
-# ──────────────────────────────────────────────────────────────
-# UTILITY FUNCTIONS
-# ──────────────────────────────────────────────────────────────
+# ── PART 7: Helper / Utility Functions ───────────────
+# small reusable functions:
+#   clear_all_files()    → deletes everything (uploads, cache, embeddings)
+#   cancel_running_tasks() → stops any OCR or analysis running in background
+#   allowed_file()       → checks if uploaded file is a .pdf
+#   no_cache_response()  → tells browser not to cache the page
+#   store_results()      → saves search results on server side
 
 def clear_all_files():
     """Remove all uploaded PDFs, cached JSON, and embedding files."""
@@ -136,9 +173,11 @@ def store_results(results, keyword):
     return result_id
 
 
-# ──────────────────────────────────────────────────────────────
-# TOPIC DETECTION & SEMANTIC SEARCH
-# ──────────────────────────────────────────────────────────────
+# ── PART 8: Topic Detection ──────────────────────────
+# tries to figure out what topics/chapters are in the PDF
+# method 1: looks at font sizes (bigger font = heading = topic)
+# method 2: if that doesn't work, uses TF-IDF to find keywords
+# then adds a short summary from the page text for each topic
 
 def detect_topics(filepath: str, cached_pages: list):
     """
@@ -268,6 +307,10 @@ def detect_topics(filepath: str, cached_pages: list):
     return clean_topics
 
 
+# ── PART 9: Embedding Generation ─────────────────────
+# converts page text & topics into number vectors (embeddings)
+# so we can do similarity search later
+# saves them as .npz files so we don't have to redo this every time
 def generate_embeddings(filename: str, cached_pages: list, topics: list):
     """
     Generate embeddings for all pages and topics using sentence-transformers.
@@ -307,6 +350,10 @@ def generate_embeddings(filename: str, cached_pages: list, topics: list):
     )
 
 
+# ── PART 10: Background Analysis Worker ──────────────
+# this runs in a separate thread so the user doesn't have to wait
+# it does topic detection + embedding generation in the background
+# can be cancelled if user uploads a new file
 def run_analysis_background(filepath, filename, task_id):
     """Background worker: detect topics + generate embeddings."""
     try:
@@ -389,6 +436,11 @@ def run_analysis_background(filepath, filename, task_id):
             analysis_tasks[task_id] = {"status": "error", "error": str(e)}
 
 
+# ── PART 11: Semantic Search ─────────────────────────
+# when normal keyword search finds nothing, this kicks in
+# it converts the search query into a vector and compares it
+# against all the page embeddings using cosine similarity
+# returns pages that are "similar" even if they don't have the exact word
 def semantic_search(keyword: str, filename: str):
     """
     Perform semantic search using cosine similarity against stored embeddings.
@@ -469,9 +521,10 @@ def semantic_search(keyword: str, filename: str):
         return []
 
 
-# ──────────────────────────────────────────────────────────────
-# TEXT EXTRACTION (PyMuPDF native text — instant)
-# ──────────────────────────────────────────────────────────────
+# ── PART 12: Text Extraction (fast method) ───────────
+# uses PyMuPDF to grab all the text from the PDF
+# this is super fast for PDFs that already have selectable text
+# saves everything to a JSON file so we don't have to extract again
 
 def extract_and_cache(filepath: str, filename: str):
     """
@@ -501,9 +554,11 @@ def extract_and_cache(filepath: str, filename: str):
     return total_pages, len(pages), skipped
 
 
-# ──────────────────────────────────────────────────────────────
-# PARALLEL OCR FOR SCANNED PAGES
-# ──────────────────────────────────────────────────────────────
+# ── PART 13: OCR Processing (for scanned pages) ─────
+# some PDFs are basically just images (scanned documents)
+# for those, we use Tesseract OCR to read the text from images
+# runs in parallel threads to speed things up
+# can be cancelled at any point if user wants to stop
 
 def ocr_single_page(page_num, img_bytes):
     """Run Tesseract OCR on a single page image."""
@@ -639,9 +694,10 @@ def run_ocr_background(filepath, filename, task_id):
         ocr_tasks[task_id]["error"] = str(e)
 
 
-# ──────────────────────────────────────────────────────────────
-# SNIPPETS
-# ──────────────────────────────────────────────────────────────
+# ── PART 14: Snippet Builder ─────────────────────────
+# when we find a keyword match, we don't show the entire page
+# instead we cut out a small snippet around the match
+# and wrap the keyword in <mark> tags so it shows up highlighted
 
 def build_snippet(text, keyword, radius=SNIPPET_RADIUS):
     """Extract a snippet around the keyword with highlighting."""
@@ -669,17 +725,17 @@ def build_snippet(text, keyword, radius=SNIPPET_RADIUS):
     return prefix + highlighted.replace("\n", "<br>") + suffix
 
 
-# ──────────────────────────────────────────────────────────────
-# ROUTES
-# ──────────────────────────────────────────────────────────────
+# ── PART 15: Flask Routes (all the URL endpoints) ────
+# this is where all the pages and API endpoints are defined
 
-# FIX #8: Handle file size limit exceeded
+# handles the error when someone tries to upload a file bigger than 50MB
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_too_large(e):
     flash("File is too large. Maximum upload size is 50 MB.", "danger")
     return redirect(url_for("index"))
 
 
+# home page - shows the upload form, search bar, and results
 @app.route("/")
 def index():
     """
@@ -729,6 +785,7 @@ def index():
     return no_cache_response(response)
 
 
+# handles file upload - saves the PDF and starts processing it
 @app.route("/upload", methods=["POST"])
 def upload():
     """Handle PDF upload with safe OCR cancellation on re-upload."""
@@ -828,6 +885,7 @@ def upload():
     return redirect(url_for("index"))
 
 
+# returns OCR progress as JSON (the frontend polls this every second)
 @app.route("/progress/<task_id>")
 def progress(task_id):
     """Return OCR progress as JSON for the frontend progress bar."""
@@ -846,6 +904,7 @@ def progress(task_id):
     )
 
 
+# search route - looks for keyword in cached text, falls back to AI search
 @app.route("/search", methods=["POST"])
 def search():
     """Search cached JSON files for keyword matches, with semantic fallback."""
@@ -925,6 +984,7 @@ def search():
     return redirect(url_for("index"))
 
 
+# returns topic analysis progress (frontend polls this every 2 seconds)
 @app.route("/analysis-progress/<task_id>")
 def analysis_progress(task_id):
     """Return analysis progress as JSON for the frontend."""
@@ -939,6 +999,7 @@ def analysis_progress(task_id):
     })
 
 
+# returns the detected topics for a PDF as JSON
 @app.route("/topics/<filename>")
 def get_topics(filename):
     """Return detected topics for a given PDF as JSON."""
@@ -951,6 +1012,7 @@ def get_topics(filename):
     return jsonify({"topics": topics, "status": "ok"})
 
 
+# clears everything - deletes files, stops tasks, resets session
 @app.route("/clear", methods=["POST"])
 def clear():
     """Delete all uploaded PDFs, cached data, and cancel OCR tasks."""
@@ -966,7 +1028,10 @@ def clear():
     return redirect(url_for("index"))
 
 
-# FIX #7: Guard startup cleanup & disable reloader to prevent double-run
+# ── PART 16: Main Entry Point ────────────────────────
+# starts the flask server
+# clears old files on startup so we get a fresh start
+# use_reloader=False because it was causing the app to run twice
 if __name__ == "__main__":
     clear_all_files()
     app.run(debug=True, use_reloader=False)
